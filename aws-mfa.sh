@@ -53,7 +53,7 @@ fi
 MFA_SERIAL=$(cat "$MFA_SERIAL_FILE")
 
 
-if [ -e $AWS_TOKEN_FILE ]; then
+if [ -e "${AWS_TOKEN_FILE}" ]; then
   authenticationOutput=$(cat "$AWS_TOKEN_FILE")
   authExpiration=$(awk '{print $3}' "$AWS_TOKEN_FILE")
   nowTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
