@@ -1,17 +1,13 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Default filename values
-MFA_SERIAL_FILE=`echo ${HOME}/.aws/.mfaserial`
-Temp_MFA_SERIAL_FILE=`echo ${HOME}/.aws/.mfaserial-temp`
-AWS_TOKEN_FILE=`echo ${HOME}/.aws/.awstoken`
-AWS_CREDENTIALS_PATH=`echo ${HOME}/.aws/credentials`
+MFA_SERIAL_FILE="${HOME}/.aws/.mfaserial"
+AWS_TOKEN_FILE="${HOME}/.aws/.awstoken"
+AWS_CREDENTIALS_PATH="${HOME}/.aws/credentials"
 DURATION_SECONDS=129600
 
 inputMFASerial() {
-   MFA_SERIAL_number=`aws iam list-mfa-devices --output text`;
-   echo "$MFA_SERIAL_number" > "$Temp_MFA_SERIAL_FILE";
-   echo "`awk '{print $3}' $Temp_MFA_SERIAL_FILE`" >> ${MFA_SERIAL_FILE}
-   rm -f $Temp_MFA_SERIAL_FILE
+   aws iam list-mfa-devices --output text | awk '{print $3}' > "${MFA_SERIAL_FILE}"
    echo "your mfaserial has been saved"
 }
 
@@ -25,7 +21,7 @@ getTempCredential(){
       esac
   done
 
-  authenticationOutput=`aws sts get-session-token --serial-number ${MFA_SERIAL} --token-code ${MFA_TOKEN} --duration-seconds ${DURATION_SECONDS} --output text`
+  authenticationOutput=$(aws sts get-session-token --serial-number "${MFA_SERIAL}" --token-code ${MFA_TOKEN} --duration-seconds ${DURATION_SECONDS} --output text)
 
   if [ ! -z "$authenticationOutput" ]; then
         # Save authentication to some file
@@ -43,24 +39,24 @@ storeTempCredential() {
 echo "
 
 [mfa]
-aws_access_key_id = `awk '{print $2}' $AWS_TOKEN_FILE `
-aws_secret_access_key = `awk '{print $4}' $AWS_TOKEN_FILE`
-aws_session_token = `awk '{print $5}' $AWS_TOKEN_FILE` " >> ${AWS_CREDENTIALS_PATH}
+aws_access_key_id = $(awk '{print $2}' "$AWS_TOKEN_FILE" )
+aws_secret_access_key = $(awk '{print $4}' "$AWS_TOKEN_FILE")
+aws_session_token = $(awk '{print $5}' "$AWS_TOKEN_FILE") " >> "${AWS_CREDENTIALS_PATH}"
 }
 
 
-if [ ! -e $MFA_SERIAL_FILE ]; then
+if [ ! -e "$MFA_SERIAL_FILE" ]; then
   inputMFASerial
 fi
 
 # Retrieve the serial code
-MFA_SERIAL=`cat $MFA_SERIAL_FILE`
+MFA_SERIAL=$(cat "$MFA_SERIAL_FILE")
 
 
 if [ -e $AWS_TOKEN_FILE ]; then
-  authenticationOutput=`cat $AWS_TOKEN_FILE`
-  authExpiration=`awk '{print $3}' $AWS_TOKEN_FILE`
-  nowTime=`date -u +'%Y-%m-%dT%H:%M:%SZ'`
+  authenticationOutput=$(cat "$AWS_TOKEN_FILE")
+  authExpiration=$(awk '{print $3}' "$AWS_TOKEN_FILE")
+  nowTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
   if [ "$authExpiration" \< "$nowTime" ]; then
     echo "Your last token has expired"
