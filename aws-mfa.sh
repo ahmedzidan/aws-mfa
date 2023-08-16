@@ -34,7 +34,6 @@ getTempCredential(){
   done
 
   authenticationOutput=$(aws sts get-session-token --serial-number "${MFA_SERIAL}" --token-code ${MFA_TOKEN} --duration-seconds ${DURATION_SECONDS} --output text --profile "${profile}")
-  echo ${authenticationOutput}
   if [ ! -z "$authenticationOutput" ]; then
         # Save authentication to some file
         echo "$authenticationOutput" > "$AWS_TOKEN_FILE";
@@ -73,7 +72,7 @@ if [ -e "${AWS_TOKEN_FILE}" ]; then
 
   if [ "$authExpiration" \< "$nowTime" ]; then
     echo "Your last token has expired"
-
+    getTempCredential "${profile}"
   else
     echo "[${profile}-mfa] not expired yet! Please add --profile ${profile}-mfa to aws commands you want to run. Eg: aws s3 ls --profile ${profile}-mfa"
   fi
